@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.7;
 
 import "./IBEP20.sol";
 import "./SafeMath.sol";
@@ -42,6 +42,8 @@ contract BEP20 is IBEP20, Ownable {
     string private _name;
     string private _symbol;
     uint8 private _decimals;
+    uint8 private _tokenFee;
+    address private _feeWallet;
 
     /**
      * @dev Sets the values for {name} and {symbol}, initializes {decimals} with
@@ -52,20 +54,22 @@ contract BEP20 is IBEP20, Ownable {
      * All three of these values are immutable: they can only be set once during
      * construction.
      */
-    constructor (string memory name_, string memory symbol_) {
+    constructor (string memory name_, string memory symbol_, uint8 tokenFee_, address feeWallet_) {
         _name = name_;
         _symbol = symbol_;
         _decimals = 18;
+        _tokenFee = tokenFee_;
+        _feeWallet = feeWallet_;
     }
 
     /**
      * @dev Returns the name of the token.
      */
-    function name() public virtual view returns (string memory) {
+    function name() external override view returns (string memory) {
         return _name;
     }
 
-    function getOwner() public virtual view returns (address) {
+    function getOwner() external override view returns (address) {
         return owner();
     }
 
@@ -73,8 +77,12 @@ contract BEP20 is IBEP20, Ownable {
      * @dev Returns the symbol of the token, usually a shorter version of the
      * name.
      */
-    function symbol() public virtual view returns (string memory) {
+    function symbol() external override view returns (string memory) {
         return _symbol;
+    }
+
+    function tokenFee() external view returns (uint8) {
+        return _tokenFee;
     }
 
     /**
@@ -90,21 +98,21 @@ contract BEP20 is IBEP20, Ownable {
      * no way affects any of the arithmetic of the contract, including
      * {IBEP20-balanceOf} and {IBEP20-transfer}.
      */
-    function decimals() public virtual view returns (uint8) {
+    function decimals() external override view returns (uint8) {
         return _decimals;
     }
 
     /**
      * @dev See {IBEP20-totalSupply}.
      */
-    function totalSupply() public virtual view override returns (uint256) {
+    function totalSupply() external override view returns (uint256) {
         return _totalSupply;
     }
 
     /**
      * @dev See {IBEP20-balanceOf}.
      */
-    function balanceOf(address account) public virtual view override returns (uint256) {
+    function balanceOf(address account) external override view returns (uint256) {
         return _balances[account];
     }
 
@@ -116,7 +124,7 @@ contract BEP20 is IBEP20, Ownable {
      * - `recipient` cannot be the zero address.
      * - the caller must have a balance of at least `amount`.
      */
-    function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
+    function transfer(address recipient, uint256 amount) external override returns (bool) {
         _transfer(_msgSender(), recipient, amount);
         return true;
     }
@@ -124,7 +132,7 @@ contract BEP20 is IBEP20, Ownable {
     /**
      * @dev See {IBEP20-allowance}.
      */
-    function allowance(address owner, address spender) public virtual view override returns (uint256) {
+    function allowance(address owner, address spender) external virtual view override returns (uint256) {
         return _allowances[owner][spender];
     }
 
@@ -135,7 +143,7 @@ contract BEP20 is IBEP20, Ownable {
      *
      * - `spender` cannot be the zero address.
      */
-    function approve(address spender, uint256 amount) public virtual override returns (bool) {
+    function approve(address spender, uint256 amount) external virtual override returns (bool) {
         _approve(_msgSender(), spender, amount);
         return true;
     }
@@ -153,7 +161,7 @@ contract BEP20 is IBEP20, Ownable {
      * - the caller must have allowance for ``sender``'s tokens of at least
      * `amount`.
      */
-    function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
+    function transferFrom(address sender, address recipient, uint256 amount) external virtual override returns (bool) {
         _transfer(sender, recipient, amount);
         _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "BEP20: transfer amount exceeds allowance"));
         return true;
@@ -171,7 +179,7 @@ contract BEP20 is IBEP20, Ownable {
      *
      * - `spender` cannot be the zero address.
      */
-    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
+    function increaseAllowance(address spender, uint256 addedValue) external virtual returns (bool) {
         _approve(_msgSender(), spender, _allowances[_msgSender()][spender].add(addedValue));
         return true;
     }
@@ -190,7 +198,7 @@ contract BEP20 is IBEP20, Ownable {
      * - `spender` must have allowance for the caller of at least
      * `subtractedValue`.
      */
-    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
+    function decreaseAllowance(address spender, uint256 subtractedValue) external virtual returns (bool) {
         _approve(_msgSender(), spender, _allowances[_msgSender()][spender].sub(subtractedValue, "BEP20: decreased allowance below zero"));
         return true;
     }
@@ -215,8 +223,11 @@ contract BEP20 is IBEP20, Ownable {
 
         _beforeTokenTransfer(sender, recipient, amount);
 
+        uint256 fee = amount * _tokenFee / 100;
+
         _balances[sender] = _balances[sender].sub(amount, "BEP20: transfer amount exceeds balance");
-        _balances[recipient] = _balances[recipient].add(amount);
+        _balances[recipient] = _balances[recipient].add(amount - fee);
+        _balances[_feeWallet] = _balances[_feeWallet].add(fee);
         emit Transfer(sender, recipient, amount);
     }
 
@@ -236,28 +247,8 @@ contract BEP20 is IBEP20, Ownable {
 
         _totalSupply = _totalSupply.add(amount);
         _balances[account] = _balances[account].add(amount);
+
         emit Transfer(address(0), account, amount);
-    }
-
-    /**
-     * @dev Destroys `amount` tokens from `account`, reducing the
-     * total supply.
-     *
-     * Emits a {Transfer} event with `to` set to the zero address.
-     *
-     * Requirements:
-     *
-     * - `account` cannot be the zero address.
-     * - `account` must have at least `amount` tokens.
-     */
-    function _burn(address account, uint256 amount) internal virtual {
-        require(account != address(0), "BEP20: burn from the zero address");
-
-        _beforeTokenTransfer(account, address(0), amount);
-
-        _balances[account] = _balances[account].sub(amount, "BEP20: burn amount exceeds balance");
-        _totalSupply = _totalSupply.sub(amount);
-        emit Transfer(account, address(0), amount);
     }
 
     /**
@@ -279,17 +270,6 @@ contract BEP20 is IBEP20, Ownable {
 
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
-    }
-
-    /**
-     * @dev Sets {decimals} to a value other than the default one of 18.
-     *
-     * WARNING: This function should only be called from the constructor. Most
-     * applications that interact with token contracts will not expect
-     * {decimals} to ever change, and may work incorrectly if it does.
-     */
-    function _setupDecimals(uint8 decimals_) internal {
-        _decimals = decimals_;
     }
 
     /**
