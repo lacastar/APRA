@@ -3,7 +3,6 @@
 pragma solidity ^0.8.7;
 
 import "./IBEP20.sol";
-import "./SafeMath.sol";
 import "./Ownable.sol";
 
 /**
@@ -31,11 +30,9 @@ import "./Ownable.sol";
  * allowances. See {IBEP20-approve}.
  */
 contract BEP20 is IBEP20, Ownable {
-    using SafeMath for uint256;
+    mapping(address => uint256) private _balances;
 
-    mapping (address => uint256) private _balances;
-
-    mapping (address => mapping (address => uint256)) private _allowances;
+    mapping(address => mapping(address => uint256)) private _allowances;
 
     uint256 private _totalSupply;
 
@@ -163,7 +160,8 @@ contract BEP20 is IBEP20, Ownable {
      */
     function transferFrom(address sender, address recipient, uint256 amount) external virtual override returns (bool) {
         _transfer(sender, recipient, amount);
-        _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "BEP20: transfer amount exceeds allowance"));
+        require(_allowances[sender][_msgSender()] >= amount, "BEP20: transfer amount exceeds allowance");
+        _approve(sender, _msgSender(), _allowances[sender][_msgSender()] - amount);
         return true;
     }
 
@@ -180,7 +178,7 @@ contract BEP20 is IBEP20, Ownable {
      * - `spender` cannot be the zero address.
      */
     function increaseAllowance(address spender, uint256 addedValue) external virtual returns (bool) {
-        _approve(_msgSender(), spender, _allowances[_msgSender()][spender].add(addedValue));
+        _approve(_msgSender(), spender, _allowances[_msgSender()][spender] + addedValue);
         return true;
     }
 
@@ -199,7 +197,8 @@ contract BEP20 is IBEP20, Ownable {
      * `subtractedValue`.
      */
     function decreaseAllowance(address spender, uint256 subtractedValue) external virtual returns (bool) {
-        _approve(_msgSender(), spender, _allowances[_msgSender()][spender].sub(subtractedValue, "BEP20: decreased allowance below zero"));
+        require(_allowances[_msgSender()][spender] >= subtractedValue, "BEP20: Decreased allowance below zero");
+        _approve(_msgSender(), spender, _allowances[_msgSender()][spender] - subtractedValue);
         return true;
     }
 
@@ -225,9 +224,14 @@ contract BEP20 is IBEP20, Ownable {
 
         uint256 fee = amount * _tokenFee / 100;
 
-        _balances[sender] = _balances[sender].sub(amount, "BEP20: transfer amount exceeds balance");
-        _balances[recipient] = _balances[recipient].add(amount - fee);
-        _balances[_feeWallet] = _balances[_feeWallet].add(fee);
+        require(_balances[sender] >= amount, "BEP20: transfer amount exceeds balance");
+
+        unchecked {
+            _balances[sender] -= amount;
+        }
+
+        _balances[recipient] = _balances[recipient] + (amount - fee);
+        _balances[_feeWallet] = _balances[_feeWallet] + fee;
         emit Transfer(sender, recipient, amount);
     }
 
@@ -245,8 +249,8 @@ contract BEP20 is IBEP20, Ownable {
 
         _beforeTokenTransfer(address(0), account, amount);
 
-        _totalSupply = _totalSupply.add(amount);
-        _balances[account] = _balances[account].add(amount);
+        _totalSupply = _totalSupply + amount;
+        _balances[account] = _balances[account] + amount;
 
         emit Transfer(address(0), account, amount);
     }
@@ -286,5 +290,5 @@ contract BEP20 is IBEP20, Ownable {
      *
      * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
      */
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual { }
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual {}
 }
