@@ -264,6 +264,11 @@ contract BEP20 is IBEP20, Ownable {
         _beforeTokenTransfer(address(0), account, amount);
 
         _totalSupply = _totalSupply + amount;
+        unchecked {
+            if(_tokenFee>0 ) {
+                require(_totalSupply*_tokenFee >= _totalSupply, "BEP20: possible fee calculation overflow");
+            }
+        }
         _balances[account] = _balances[account] + amount;
 
         emit Transfer(address(0), account, amount);
