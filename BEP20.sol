@@ -45,15 +45,16 @@ contract BEP20 is IBEP20, Ownable {
     mapping (address => bool) private _isExcludedFromFee;
 
     /**
-     * @dev Sets the values for {name} and {symbol}, initializes {decimals} with
-     * a default value of 18.
+     * @dev Sets the values for {name}, {symbol} and {tokenFee}, {} initializes {decimals} with
+     * a default value of 18, {takeFee} to true and sets the {feeWallet}.
      *
      * To select a different value for {decimals}, use {_setupDecimals}.
-     *
-     * All three of these values are immutable: they can only be set once during
+     * 
+     * {name}, {symbol}, {tokenFee} and {decimals} are immutable: they can only be set once during
      * construction.
      */
     constructor (string memory name_, string memory symbol_, uint8 tokenFee_, address feeWallet_) {
+        require(tokenFee_>=0 && tokenFee_<100, "BEP20: invalid token fee");
         _name = name_;
         _symbol = symbol_;
         _decimals = 18;
