@@ -54,7 +54,8 @@ contract BEP20 is IBEP20, Ownable {
      * construction.
      */
     constructor (string memory name_, string memory symbol_, uint8 tokenFee_, address feeWallet_) {
-        require(tokenFee_>=0 && tokenFee_<100, "BEP20: invalid token fee");
+        require(tokenFee_<100, "BEP20: invalid token fee");
+        require(feeWallet_ != address(0), "BEP20: fee wallet is the zero address");
         _name = name_;
         _symbol = symbol_;
         _decimals = 18;
@@ -133,8 +134,8 @@ contract BEP20 is IBEP20, Ownable {
     /**
      * @dev See {IBEP20-allowance}.
      */
-    function allowance(address owner, address spender) external virtual view override returns (uint256) {
-        return _allowances[owner][spender];
+    function allowance(address owner_, address spender) external virtual view override returns (uint256) {
+        return _allowances[owner_][spender];
     }
 
     /**
@@ -343,12 +344,12 @@ contract BEP20 is IBEP20, Ownable {
      * - `owner` cannot be the zero address.
      * - `spender` cannot be the zero address.
      */
-    function _approve(address owner, address spender, uint256 amount) internal virtual {
-        require(owner != address(0), "BEP20: approve from the zero address");
+    function _approve(address owner_, address spender, uint256 amount) internal virtual {
+        require(owner_ != address(0), "BEP20: approve from the zero address");
         require(spender != address(0), "BEP20: approve to the zero address");
 
-        _allowances[owner][spender] = amount;
-        emit Approval(owner, spender, amount);
+        _allowances[owner_][spender] = amount;
+        emit Approval(owner_, spender, amount);
     }
 
     /**

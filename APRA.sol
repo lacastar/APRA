@@ -4,12 +4,12 @@ pragma solidity 0.8.7;
 
 import "./BEP20.sol";
 
-contract APRA is BEP20("Apraemio", "APRA", 1, address(0x0)){
+contract APRA is BEP20{
 
   /**
   * @param wallet Address of the wallet, where tokens will be transferred to
   */
-  constructor(address wallet) {
-    _mint(wallet, uint256(1000000000) * 1 ether);
+  constructor(address wallet, address feeWallet) BEP20("Apraemio", "APRA", 1, feeWallet){
+    _mint(wallet, uint256(1_000_000_000) * 1 ether);
   }
 }
