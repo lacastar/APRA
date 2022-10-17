@@ -2,8 +2,23 @@
 	{
 		"inputs": [
 			{
+				"internalType": "string",
+				"name": "name_",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "symbol_",
+				"type": "string"
+			},
+			{
+				"internalType": "uint8",
+				"name": "tokenFee_",
+				"type": "uint8"
+			},
+			{
 				"internalType": "address",
-				"name": "wallet",
+				"name": "feeWallet_",
 				"type": "address"
 			}
 		],
@@ -121,7 +136,7 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "owner",
+				"name": "owner_",
 				"type": "address"
 			},
 			{
