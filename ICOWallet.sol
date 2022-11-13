@@ -47,4 +47,14 @@ contract ICOWallet is Ownable {
         return true;
     }
 
+    /**
+     * @dev Remove funds from contract
+     */
+    function removeFunds() external onlyOwner returns (bool) {
+        uint256 funds = _apra.balanceOf(address(this));
+        require(funds > 0, "ICOWallet: No funds to withdraw");
+        _apra.transfer(msg.sender, funds);
+        return true;
+    }
+
 }
