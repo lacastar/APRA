@@ -20,6 +20,9 @@ contract ApraSale is Ownable {
     address public _senderWallet; // wallet holding the APRAs to distribute
     mapping(address => bool) private _isAcceptedToken; // token can be used for payment (ex.: BUSD, TUSD, DAI)
 
+    mapping (address => bool) private _isExcludedFromLock;
+    mapping (address => bool) private _isAdmin;
+
     event Purchase(address indexed tokenAddress, address indexed recipient, uint256 amount);
 
     /**
@@ -103,10 +106,14 @@ contract ApraSale is Ownable {
         require(token.allowance(msg.sender, address(this)) >= senderBalance, "ApraSale: not enough allowance");
         require(_apra.allowance(_senderWallet, address(this)) >= amount, "ApraSale: not enoguh APRAs to send out");
 
-        _apra.transferFrom(_senderWallet, recipient, amount * 2 / 5);
-        _apra.transferFrom(_senderWallet, address(this), amount * 3 / 5);
-        _apra.increaseAllowance(address(_lock), amount * 3 / 5);
-        _lock.lockAmount(recipient, amount * 3 / 5);
+        if(isExcludedFromLock(recipient)){
+            _apra.transferFrom(_senderWallet, recipient, amount);
+        }else{
+            _apra.transferFrom(_senderWallet, recipient, amount * 2 / 5);
+            _apra.transferFrom(_senderWallet, address(this), amount * 3 / 5);
+            _apra.increaseAllowance(address(_lock), amount * 3 / 5);
+            _lock.lockAmount(recipient, amount * 3 / 5);
+        }
         token.transferFrom(msg.sender, _fundsWallet, senderBalance);
 
         emit Purchase(tokenAddress, recipient, amount);
@@ -127,10 +134,14 @@ contract ApraSale is Ownable {
         require(token.allowance(msg.sender, address(this)) >= price, "ApraSale: not enough allowance");
         require(_apra.allowance(_senderWallet, address(this)) >= amount, "ApraSale: not enoguh APRAs to send out");
         
-        _apra.transferFrom(_senderWallet, msg.sender, amount * 2 / 5);
-        _apra.transferFrom(_senderWallet, address(this), amount * 3 / 5);
-        _apra.increaseAllowance(address(_lock), amount * 3 / 5);
-        _lock.lockAmount(msg.sender, amount * 3 / 5);
+        if(isExcludedFromLock(msg.sender)){
+            _apra.transferFrom(_senderWallet, msg.sender, amount);
+        }else{
+            _apra.transferFrom(_senderWallet, msg.sender, amount * 2 / 5);
+            _apra.transferFrom(_senderWallet, address(this), amount * 3 / 5);
+            _apra.increaseAllowance(address(_lock), amount * 3 / 5);
+            _lock.lockAmount(msg.sender, amount * 3 / 5);
+        }
         token.transferFrom(msg.sender, _fundsWallet, price);
 
         emit Purchase(tokenAddress, msg.sender, amount);
@@ -148,5 +159,62 @@ contract ApraSale is Ownable {
         token.transfer(owner(), token.balanceOf(address(this)));
         return true;
     }
+
+    /**
+     * @dev Exclude (`account`) from time lock.
+     * Can only be called by an admin.
+     */
+    function excludeFromLock(address account) external onlyAdmin {
+        _isExcludedFromLock[account] = true;
+    }
+    
+    /**
+     * @dev Include (`account`) in time lock.
+     * Can only be called by and admin.
+     */
+    function includeInLock(address account) external onlyAdmin {
+        _isExcludedFromLock[account] = false;
+    }
+
+    /**
+     * @dev Check if (`account`) is in time lock.
+     * 
+     */
+    function isExcludedFromLock(address account) public view returns(bool) {
+        return _isExcludedFromLock[account];
+    }
+
+    /**
+     * @dev Add (`account`) to admins.
+     * Can only be called by the current owner.
+     */
+    function setAdmin(address account) external onlyOwner {
+        _isAdmin[account] = true;
+    }
+    
+    /**
+     * @dev Remove (`account`) from admins.
+     * Can only be called by the current owner.
+     */
+    function removeAdmin(address account) external onlyOwner {
+        _isAdmin[account] = false;
+    }
+
+    /**
+     * @dev Check if (`account`) is admin.
+     * 
+     */
+    function isAdmin(address account) public view returns(bool) {
+        return _isAdmin[account];
+    }
+	
+	
+	/**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyAdmin() {
+        require(isAdmin(_msgSender()) || owner() == _msgSender(), "ApraSale_v2: caller is not admin");
+        _;
+    }	
 
 }
