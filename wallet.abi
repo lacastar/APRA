@@ -10,6 +10,11 @@
 				"internalType": "contract TimeLock",
 				"name": "lock",
 				"type": "address"
+			},
+			{
+				"internalType": "contract ApraSale",
+				"name": "apraSale",
+				"type": "address"
 			}
 		],
 		"stateMutability": "nonpayable",
@@ -36,6 +41,19 @@
 	},
 	{
 		"inputs": [],
+		"name": "_senderWallet",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "owner",
 		"outputs": [
 			{
@@ -49,7 +67,20 @@
 	},
 	{
 		"inputs": [],
-		"name": "removeFunds",
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "senderWallet",
+				"type": "address"
+			}
+		],
+		"name": "setSenderWallet",
 		"outputs": [
 			{
 				"internalType": "bool",
@@ -57,13 +88,6 @@
 				"type": "bool"
 			}
 		],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "renounceOwnership",
-		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
 	},
