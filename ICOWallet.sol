@@ -5,6 +5,7 @@ pragma solidity 0.8.7;
 import "./Ownable.sol";
 import "./APRA.sol";
 import "./TimeLock.sol";
+import "./ApraSale_v2.sol";
 
 
 /**
@@ -15,14 +16,18 @@ contract ICOWallet is Ownable {
 
     APRA  private _apra; // APRA contract
     TimeLock private _lock; // Vesting contract
+    ApraSale private _apraSale; // ApraSale contract
+    address public _senderWallet; // wallet holding the APRAs to distribute
 
     /**
     * @param apra Address of the APRA token contract
     * 
     */
-    constructor(APRA apra, TimeLock lock){
+    constructor(APRA apra, TimeLock lock, ApraSale apraSale){
         _apra = apra;
         _lock = lock;
+        _apraSale = apraSale;
+        _senderWallet = msg.sender;
     }
 
     /**
@@ -32,9 +37,14 @@ contract ICOWallet is Ownable {
      */
     function transfer(address recipient, uint256 amount) external onlyOwner returns (bool) {
         require(amount > 0, "ICOWallet: amount must be greater than 0");
-        _apra.transfer(recipient, amount * 2 / 5);
-        _apra.increaseAllowance(address(_lock), amount * 3 / 5);
-        _lock.lockAmount(recipient, amount * 3 / 5);
+        if(_apraSale.isExcludedFromLock(recipient)){
+            _apra.transferFrom(_senderWallet, recipient, amount);
+        }else{
+            _apra.transferFrom(_senderWallet, recipient, amount * 2 / 5);
+            _apra.transferFrom(_senderWallet, address(this), amount * 3 / 5);
+            _apra.increaseAllowance(address(_lock), amount * 3 / 5);
+            _lock.lockAmount(recipient, amount * 3 / 5);
+        }
         return true;
     }
 
@@ -48,12 +58,11 @@ contract ICOWallet is Ownable {
     }
 
     /**
-     * @dev Remove funds from contract
+     * @dev Set sender wallet - APRA is sent from here
+     * @param senderWallet wallet address 
      */
-    function removeFunds() external onlyOwner returns (bool) {
-        uint256 funds = _apra.balanceOf(address(this));
-        require(funds > 0, "ICOWallet: No funds to withdraw");
-        _apra.transfer(msg.sender, funds);
+    function setSenderWallet(address senderWallet) external onlyOwner returns (bool) {
+        _senderWallet = senderWallet;
         return true;
     }
 
