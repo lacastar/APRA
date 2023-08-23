@@ -4,7 +4,7 @@ pragma solidity 0.8.7;
 
 import "./Ownable.sol";
 import "./APRA.sol";
-import "./TimeLock.sol";
+import "./TimeLock_v2.sol";
 import "./IBEP20.sol";
 
 /**
