@@ -18,7 +18,7 @@ import "./Ownable.sol";
  * Every address can be queried for the actual or a given time for amount of tokens that can be currently withdrawn.
  * The formula for the withdrawal is 10% each months (every 30 days)
  */
-contract TimeLockV2 is Ownable {
+contract TimeLock is Ownable {
 
     APRA  private _apra; // APRA contract
     uint256 private _icoTimestamp; // date and time of ICO in seconds after UNIX epoch
@@ -177,6 +177,3 @@ contract TimeLockV2 is Ownable {
         return _icoLocked;
     }
 }
-
-
-
