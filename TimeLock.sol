@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+// DEPRECATED
 
 pragma solidity 0.8.7;
 
