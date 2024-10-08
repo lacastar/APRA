@@ -149,12 +149,11 @@ contract TimeLock is Ownable {
     */
     function transfer(address recipient) external {
         Locker memory lock = _lockers[msg.sender];
-        (uint256 sum, ) = available(msg.sender);
-        require(sum > 0, "TimeLock: nothing to transfer");
+        require(lock.fullAmount > lock.withdrawn, "TimeLock: nothing to transfer");
         // amount can not be greater than APRA supply
         unchecked{
-            _lockers[recipient].fullAmount = lock.fullAmount;
-            _lockers[recipient].withdrawn = lock.withdrawn;
+            _lockers[recipient].fullAmount += lock.fullAmount;
+            _lockers[recipient].withdrawn += lock.withdrawn;
             _lockers[msg.sender].fullAmount = 0;
             _lockers[msg.sender].withdrawn = 0;
         }
