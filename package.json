@@ -16,10 +16,9 @@
     "clean": "npx hardhat clean",
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
-    "coverage": "npm run build && npx hardhat coverage --temp artifacts --network coverage",
+    "coverage": "npm run build && npx hardhat coverage --temp artifacts",
     "rebuild": "npm run clean && npm run build && npm run test",
     "deploy": "npx hardhat run scripts/deploy.js --network",
-    "lint": "eslint ./ --fix",
-    "lint-quick": "pretty-quick --staged --pattern \"**/*.*(ts|tsx)\""
+    "lint": "eslint ./ --fix"
   }
 }
