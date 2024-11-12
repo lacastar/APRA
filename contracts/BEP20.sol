@@ -44,7 +44,6 @@ contract BEP20 is IBEP20, Ownable {
     bool private _takeFee;
     mapping (address => bool) private _isExcludedFromFee;
 
-    error InvalidTokenFee();
     error FeeWalletIsZeroAddress();
 
     /**
@@ -57,9 +56,6 @@ contract BEP20 is IBEP20, Ownable {
      * construction.
      */
     constructor (string memory name_, string memory symbol_, uint8 tokenFee_, address feeWallet_) {
-        if (tokenFee_>=100) {
-            revert InvalidTokenFee();
-        } 
         if(feeWallet_ == address(0)) {
             revert FeeWalletIsZeroAddress();
         }
