@@ -130,7 +130,7 @@ describe("TimeLock", function () {
       const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
       await expect(timelock.connect(alice).setIcoTimestamp(unlockTime)).to.be.revertedWithCustomError(
         timelock,
-        "CallerIsNotTheOwner"
+        "OwnableUnauthorizedAccount"
       );
     });
 
@@ -140,7 +140,7 @@ describe("TimeLock", function () {
       await timelock.setIcoTimestamp(unlockTime);
       await expect(timelock.connect(alice).lockIcoTimestamp()).to.be.revertedWithCustomError(
         timelock,
-        "CallerIsNotTheOwner"
+        "OwnableUnauthorizedAccount"
       );
     });
 
@@ -148,7 +148,7 @@ describe("TimeLock", function () {
       const { apra, owner, funds, fees, timelock, alice } = await loadFixture(deployTimeLock);
       await expect(timelock.connect(alice).setAccountAsLocker(alice)).to.be.revertedWithCustomError(
         timelock,
-        "CallerIsNotTheOwner"
+        "OwnableUnauthorizedAccount"
       );
     });
 
@@ -156,7 +156,7 @@ describe("TimeLock", function () {
       const { apra, owner, funds, fees, timelock, alice } = await loadFixture(deployTimeLock);
       await expect(timelock.connect(alice).removeAccountFromLockers(alice)).to.be.revertedWithCustomError(
         timelock,
-        "CallerIsNotTheOwner"
+        "OwnableUnauthorizedAccount"
       );
     });
     

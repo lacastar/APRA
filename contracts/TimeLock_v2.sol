@@ -3,7 +3,7 @@
 pragma solidity 0.8.7;
 
 import "./APRA.sol";
-import "./Ownable.sol";
+import "./Ownable2Step.sol";
 
 /**
  * @dev Token vesting contract.
@@ -18,7 +18,7 @@ import "./Ownable.sol";
  * Every address can be queried for the actual or a given time for amount of tokens that can be currently withdrawn.
  * The formula for the withdrawal is 10% each months (every 30 days)
  */
-contract TimeLock is Ownable {
+contract TimeLock is Ownable2Step {
 
     APRA  private _apra; // APRA contract
     uint256 private _icoTimestamp; // date and time of ICO in seconds after UNIX epoch
@@ -39,7 +39,7 @@ contract TimeLock is Ownable {
     /**
     * @param apra Address of APRA token contract
     */
-    constructor(APRA apra){
+    constructor(APRA apra) Ownable(_msgSender()){
         _apra = apra;
     }
 

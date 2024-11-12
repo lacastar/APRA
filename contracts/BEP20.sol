@@ -3,7 +3,7 @@
 pragma solidity 0.8.7;
 
 import "./IBEP20.sol";
-import "./Ownable.sol";
+import "./Ownable2Step.sol";
 
 /**
  * @dev Implementation of the {IBEP20} interface.
@@ -29,7 +29,7 @@ import "./Ownable.sol";
  * functions have been added to mitigate the well-known issues around setting
  * allowances. See {IBEP20-approve}.
  */
-contract BEP20 is IBEP20, Ownable {
+contract BEP20 is IBEP20, Ownable2Step {
     mapping(address => uint256) private _balances;
 
     mapping(address => mapping(address => uint256)) private _allowances;
@@ -55,7 +55,7 @@ contract BEP20 is IBEP20, Ownable {
      * {name}, {symbol}, {tokenFee} and {decimals} are immutable: they can only be set once during
      * construction.
      */
-    constructor (address feeWallet_) {
+    constructor (address feeWallet_) Ownable(_msgSender()){
         if(feeWallet_ == address(0)) {
             revert FeeWalletIsZeroAddress();
         }

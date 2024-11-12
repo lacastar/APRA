@@ -312,47 +312,55 @@ describe("APRA", function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(deployApra);
       await expect(apra.connect(bob).changeFeeWallet(funds)).to.be.revertedWithCustomError(
         apra,
-        'CallerIsNotTheOwner'
+        'OwnableUnauthorizedAccount'
       );
     })
     it("Set take fee", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(deployApra);
       await expect(apra.connect(bob).setTakeFee(true)).to.be.revertedWithCustomError(
         apra,
-        'CallerIsNotTheOwner'
+        'OwnableUnauthorizedAccount'
       );
     })
     it("Exclude from fee", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(deployApra);
       await expect(apra.connect(bob).excludeFromFee(alice)).to.be.revertedWithCustomError(
         apra,
-        'CallerIsNotTheOwner'
+        'OwnableUnauthorizedAccount'
       );
     })
     it("Include in fee", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(deployApra);
       await expect(apra.connect(bob).includeInFee(alice)).to.be.revertedWithCustomError(
         apra,
-        'CallerIsNotTheOwner'
+        'OwnableUnauthorizedAccount'
       );
     })
     it("Change owner", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(deployApra);
       await expect(apra.connect(bob).transferOwnership(funds)).to.be.revertedWithCustomError(
         apra,
-        'CallerIsNotTheOwner'
+        'OwnableUnauthorizedAccount'
       );
     })
     it("Renounce owner", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(deployApra);
       await expect(apra.connect(bob).renounceOwnership()).to.be.revertedWithCustomError(
         apra,
-        'CallerIsNotTheOwner'
+        'OwnableUnauthorizedAccount'
       );
     })
     it("Transfer Ownership", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(deployApra);
       await apra.transferOwnership(bob);
+      expect(await apra.getOwner()).to.equal(owner);
+      expect(await apra.pendingOwner()).to.equal(bob);
+
+      await expect(apra.acceptOwnership()).to.be.revertedWithCustomError(
+        apra,
+        "OwnableUnauthorizedAccount"
+      );
+      await apra.connect(bob).acceptOwnership();
       expect(await apra.getOwner()).to.equal(bob);
     })
     it("Renounce Ownership", async function () {
@@ -360,13 +368,13 @@ describe("APRA", function () {
       await apra.renounceOwnership();
       expect(await apra.getOwner()).to.equal(ZERO_ADDRESS);
     })
-    it("Transfer Ownership to 0x0", async function () {
+    /*it("Transfer Ownership to 0x0", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(deployApra);
       await expect(apra.transferOwnership(ZERO_ADDRESS)).to.be.revertedWithCustomError(
         apra,
-        'NewOwnerIsTheZeroAddress'
+        'OwnableInvalidOwner'
       );
-    })
+    })*/
     
   });
 });

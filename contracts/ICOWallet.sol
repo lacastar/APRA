@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.7;
 
-import "./Ownable.sol";
+import "./Ownable2Step.sol";
 import "./APRA.sol";
 import "./TimeLock_v2.sol";
 import "./ApraSale_v2.sol";
@@ -12,7 +12,7 @@ import "./ApraSale_v2.sol";
  * @dev Wallet contract for distributing purchased tokens.
  *
  */
-contract ICOWallet is Ownable {
+contract ICOWallet is Ownable2Step {
 
     APRA  private _apra; // APRA contract
     TimeLock private _lock; // Vesting contract
@@ -23,7 +23,7 @@ contract ICOWallet is Ownable {
     * @param apra Address of the APRA token contract
     * 
     */
-    constructor(APRA apra, TimeLock lock, ApraSale apraSale){
+    constructor(APRA apra, TimeLock lock, ApraSale apraSale) Ownable(_msgSender()){
         _apra = apra;
         _lock = lock;
         _apraSale = apraSale;
