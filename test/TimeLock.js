@@ -297,6 +297,10 @@ describe("TimeLock", function () {
         timelock,
         "NoAmountLocked"
       );
+      await expect(timelock.connect(alice).transfer(alice)).to.be.revertedWithCustomError(
+        timelock,
+        "SelfTransferNotAllowed"
+      ) 
       await timelock.connect(alice).transfer(bob);
       await expect(timelock.connect(alice)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS)).to.be.revertedWithCustomError(
         timelock,

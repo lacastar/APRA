@@ -192,6 +192,7 @@ contract TimeLock is Ownable {
     }
 
     error NothingToTransfer();
+    error SelfTransferNotAllowed();
     /**
     * @dev Transfer lock
     */
@@ -200,6 +201,11 @@ contract TimeLock is Ownable {
         if(lock.fullAmount <= lock.withdrawn){
             revert NothingToTransfer();
         }
+
+        if(msg.sender == recipient) {
+            revert SelfTransferNotAllowed();
+        }
+
         // amount can not be greater than APRA supply
         unchecked{
             _lockers[recipient].fullAmount += lock.fullAmount;
