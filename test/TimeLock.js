@@ -39,6 +39,7 @@ describe("TimeLock", function () {
     );
 
     await apra.excludeFromFee(timelock);
+    await timelock.setAccountAsLocker(funds.address);
 
     return { apra, owner, funds, fees, timelock, alice, bob };
   }
@@ -48,6 +49,7 @@ describe("TimeLock", function () {
 
     const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
     await timelock.setIcoTimestamp(unlockTime);
+    await timelock.setAccountAsLocker(funds.address);
     await apra.connect(funds).approve(timelock, expandTo18Decimals(1000));
     await timelock.connect(funds).lockAmount(alice, expandTo18Decimals(1000));
 
@@ -126,6 +128,20 @@ describe("TimeLock", function () {
       )
     });
 
+    it("Set locker", async function () {
+      const { apra, owner, funds, fees, timelock, alice } = await loadFixture(deployTimeLock);
+      await expect(timelock.connect(alice).setAccountAsLocker(alice)).to.be.revertedWith(
+        'Ownable: caller is not the owner'
+      )
+    });
+
+    it("Remove locker", async function () {
+      const { apra, owner, funds, fees, timelock, alice } = await loadFixture(deployTimeLock);
+      await expect(timelock.connect(alice).removeAccountFromLockers(alice)).to.be.revertedWith(
+        'Ownable: caller is not the owner'
+      )
+    });
+    
   });
 
   describe("Lock amount", function () {
@@ -205,6 +221,43 @@ describe("TimeLock", function () {
       await expect(timelock.connect(funds).lockAmount(alice, expandTo18Decimals(0))).to.be.revertedWith(
         "TimeLock: amount must be greater than 0"
       )
+    });
+
+
+    it("Lock - not locker", async function () {
+      const { apra, owner, funds, fees, timelock, alice } = await loadFixture(deployTimeLock);
+      const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
+      //await timelock.setIcoTimestamp(unlockTime);
+      await apra.connect(funds).approve(timelock, expandTo18Decimals(100));
+      await timelock.connect(owner).removeAccountFromLockers(funds);
+      await expect(timelock.connect(funds).lockAmount(alice, expandTo18Decimals(10))).to.be.revertedWith(
+        "TimeLock: sender can't lock"
+      )
+    });
+
+    it("Lock - ICO started", async function () {
+      const { apra, owner, funds, fees, timelock, alice } = await loadFixture(deployTimeLock);
+      const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
+      await timelock.setIcoTimestamp(unlockTime);
+      await apra.connect(funds).approve(timelock, expandTo18Decimals(100));
+      await time.increaseTo(ONE_YEAR_IN_SECS + unlockTime);
+      await expect(timelock.connect(funds).lockAmount(alice, expandTo18Decimals(10))).to.be.revertedWith(
+        "TimeLock: ICO started"
+      )
+    });
+  });
+
+  describe("Can lock", function () {
+    it("Can lock", async function () {
+      const { apra, owner, funds, fees, timelock, alice, bob } = await loadFixture(deployAndLockAlice1000);
+      const canlock = await timelock.canLock(funds);
+      expect(canlock) 
+      const canlockAlice = await timelock.canLock(alice);
+      expect(!canlockAlice) 
+      await timelock.removeAccountFromLockers(funds);
+      const canlockFalse = await timelock.canLock(funds);
+      expect(!canlockFalse) 
+      
     });
   });
 

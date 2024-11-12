@@ -33,6 +33,9 @@ contract TimeLock is Ownable {
     // mapping address to vested and withdrawn amount of tokens
     mapping(address => Locker) private _lockers; 
 
+    // mapping of addresses that can lock funds
+    mapping (address => bool) private _canLock;
+
     /**
     * @param apra Address of APRA token contract
     */
@@ -119,6 +122,9 @@ contract TimeLock is Ownable {
     */
     function lockAmount(address locker, uint256 amount) external {
         require(amount > 0, "TimeLock: amount must be greater than 0");
+        require(_canLock[msg.sender], "TimeLock: sender can't lock");
+        require(block.timestamp < _icoTimestamp, "TimeLock: ICO started");
+        
         // amount can not be greater than APRA supply
         unchecked{
             _lockers[locker].fullAmount += amount;
@@ -174,5 +180,28 @@ contract TimeLock is Ownable {
     */
     function isIcoLocked() external view returns (bool) {
         return _icoLocked;
+    }
+
+    /**
+     * @dev Set (`account`) to be able to lock funds .
+     * Can only be called by the current owner.
+     */
+    function setAccountAsLocker(address account) external onlyOwner {
+        _canLock[account] = true;
+    }
+    
+    /**
+     * @dev Remove (`account`) from lockers.
+     * Can only be called by the current owner.
+     */
+    function removeAccountFromLockers(address account) external onlyOwner {
+        _canLock[account] = false;
+    }
+
+    /**
+     * @dev Check if (`account`) can lock funds.
+     */
+    function canLock(address account) external view returns(bool) {
+        return _canLock[account];
     }
 }

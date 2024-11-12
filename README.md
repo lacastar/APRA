@@ -48,6 +48,8 @@ The TimeLock contract (TimeLock_v2.sol) implements token vesting.
   - After the icoTimestamp 10% of the original amount can be withdrawn every 30 days. The whole amount is freed after 180 days after the ICO timestamp.
 - It is possible to query the amount of tokens that can be withdrawn at a given time after the ICO timestamp is set. *available* has two versions that can be used for the sender or a given address at the current time, *availableAt* comes in also two flavors and specifies a timestamp for either the sender or a specific address.
 - If an account is compromised it can transfer it's lock to another address (*transfer*)
+- It is not possible to lock tokens after the *icoTimestamp*
+- Only locker accounts can lock tokens. It can be queried (*canLock*) if an address can lock. The owner can add (*setAccountAsLocker*) and remove (*removeAccountFromLockers*) addressess from the list that can lock tokens.
 
 ## Roles
 
@@ -60,6 +62,7 @@ The TimeLock contract has two roles as well:
 
 - User (default): can create, withdraw or transfer a lock.
 - Admin (owner): can set the ICO timestamp and lock the ICO timestamp.
+- Locker: A list of locker accounts is maintained who can lock amounts for users. 
 
 # Technical Requirements
 
