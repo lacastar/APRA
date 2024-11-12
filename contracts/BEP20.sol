@@ -185,9 +185,7 @@ contract BEP20 is IBEP20, Ownable {
      * - `spender` cannot be the zero address.
      */
     function increaseAllowance(address spender, uint256 addedValue) external virtual returns (bool) {
-        unchecked {
-            _approve(_msgSender(), spender, _allowances[_msgSender()][spender] + addedValue);
-        }
+        _approve(_msgSender(), spender, _allowances[_msgSender()][spender] + addedValue);
         return true;
     }
 
