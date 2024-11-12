@@ -43,7 +43,7 @@ The TimeLock contract (TimeLock_v2.sol) implements token vesting.
 
 - Upon presale token purchases users only receive 40% of their tokens, the rest is locked in the contract (*lockAmount*) A lock is represented by a *Locker* structure that contains the full and the withdrawn amounts. Tokens locked for the same address are added to the existing lock.
 - Tokens can be withdrawn (*withdraw*) when:
-  - The *icoTimestamp* is set (the expected date of the ICO or CEX listing as a UNiX timestamp)
+  - The *icoTimestamp* is set (the expected date of the ICO or CEX listing as a UNiX timestamp) - can be a past date in case the ICO date can not be published in advance (due to legal issues or human error) It is possible that even the whole amount of locked tokens could be withdrawn at once in an edge case.
   - The *icoTimestamp* is locked (*icoLocked*). It is only possible to modify the timestamp before locking it. Once locked (*lockIcoTimestamp*) it can not be unlocked.
   - After the icoTimestamp 10% of the original amount can be withdrawn every 30 days. The whole amount is freed after 180 days after the ICO timestamp.
 - It is possible to query the amount of tokens that can be withdrawn at a given time after the ICO timestamp is set. *available* has two versions that can be used for the sender or a given address at the current time, *availableAt* comes in also two flavors and specifies a timestamp for either the sender or a specific address.
