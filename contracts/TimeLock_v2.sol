@@ -31,7 +31,7 @@ contract TimeLock is Ownable {
     }
 
     // mapping address to vested and withdrawn amount of tokens
-    mapping(address => Locker) private _lockers; 
+    mapping(address => Locker) public _lockers; 
 
     // mapping of addresses that can lock funds
     mapping (address => bool) private _canLock;
@@ -74,7 +74,7 @@ contract TimeLock is Ownable {
     /**
     * @dev Calculates the token amount that can be withdrawn now by the sender
     */
-    function available() public view returns (uint256, Locker memory) {
+    function available() public view returns (uint256) {
         return availableAt(msg.sender, block.timestamp);
     }
 
@@ -82,7 +82,7 @@ contract TimeLock is Ownable {
     * @dev Calculates the token amount that can be withdrawn now for the given address
     * @param locker Calculation is done for this address
     */
-    function available(address locker) public view returns (uint256, Locker memory) {
+    function available(address locker) public view returns (uint256) {
         return availableAt(locker, block.timestamp);
     }
 
@@ -90,7 +90,7 @@ contract TimeLock is Ownable {
     * @dev Calculates the token amount that can be withdrawn at the specified time by the caller
     * @param timestamp The timestamp (in seconds from UNIX epoch) used for the calculation
     */
-    function availableAt(uint256 timestamp) external view returns (uint256, Locker memory) {
+    function availableAt(uint256 timestamp) external view returns (uint256) {
         return availableAt(msg.sender, timestamp);
     }
 
@@ -99,7 +99,7 @@ contract TimeLock is Ownable {
     * @param locker Withdrawing address
     * @param timestamp Timestamp (in seconds after UNIC epoch) of withdrawal
     */
-    function availableAt(address locker, uint256 timestamp) public view returns (uint256, Locker memory) {
+    function availableAt(address locker, uint256 timestamp) public view returns (uint256) {
         require(_icoTimestamp > 0, "TimeLock: ICO timestamp not set");
         require(timestamp > _icoTimestamp, "TimeLock: no withdrawal before ICO");
         require(timestamp >= block.timestamp, "TimeLock: timestamp is in the past");
@@ -110,7 +110,7 @@ contract TimeLock is Ownable {
             uint256 months = (timestamp - _icoTimestamp) / 30 days;
             if(months > 6) months = 6;
             // withdrawn amount can not exceed scheduled sum for present and future dates
-            return ( lock.fullAmount * months / 6 - lock.withdrawn, lock);
+            return ( lock.fullAmount * months / 6 - lock.withdrawn);
         }
     }
 
@@ -139,7 +139,7 @@ contract TimeLock is Ownable {
     */
     function withdraw() external {
         require(_icoLocked, "TimeLock: ICO timestamp not locked");
-        (uint256 sum, ) = available();
+        uint256 sum = available();
         require(sum > 0, "TimeLock: nothing to withdraw");
         // amount can not be greater than APRA supply
         unchecked{

@@ -200,16 +200,16 @@ describe("TimeLock", function () {
         [expandTo18Decimals(-100), expandTo18Decimals(0), expandTo18Decimals(100), 0]
       );
       const result1 = await timelock["availableAt(address,uint256)"](alice, unlockTime + VESTING_IN_SECS);
-      expect(result1[0]).equal(expandTo18Decimals(100));
+      expect(result1).equal(expandTo18Decimals(100));
       const result2 = await timelock.connect(alice)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS);
-      expect(result2[0]).equal(expandTo18Decimals(100));
+      expect(result2).equal(expandTo18Decimals(100));
 
       // We can increase the time in Hardhat Network
       await time.increaseTo(ONE_YEAR_IN_SECS + unlockTime);
       const result3 = await timelock["available(address)"](alice);
-      expect(result3[0]).equal(expandTo18Decimals(100));
+      expect(result3).equal(expandTo18Decimals(100));
       const result4 = await timelock.connect(alice)["available()"]();
-      expect(result4[0]).equal(expandTo18Decimals(100));
+      expect(result4).equal(expandTo18Decimals(100));
 
     });
 
@@ -266,7 +266,7 @@ describe("TimeLock", function () {
       const { apra, owner, funds, fees, timelock, alice, bob } = await loadFixture(deployAndLockAlice1000);
       const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
       const beforeAlice = await timelock.connect(alice)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS);
-      expect(beforeAlice[0]).equal(expandTo18Decimals(1000));
+      expect(beforeAlice).equal(expandTo18Decimals(1000));
       await expect(timelock.connect(bob)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS)).to.be.revertedWith(
         'TimeLock: no amount locked'
       );
@@ -275,7 +275,7 @@ describe("TimeLock", function () {
         'TimeLock: no amount locked'
       );
       const afterBob = await timelock.connect(bob)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS);
-      expect(afterBob[0]).equal(expandTo18Decimals(1000));
+      expect(afterBob).equal(expandTo18Decimals(1000));
     });
 
 
@@ -283,7 +283,7 @@ describe("TimeLock", function () {
       const { apra, owner, funds, fees, timelock, alice, bob } = await loadFixture(deployAndLockAlice1000);
       const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
       const beforeAlice = await timelock.connect(alice)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS);
-      expect(beforeAlice[0]).equal(expandTo18Decimals(1000));
+      expect(beforeAlice).equal(expandTo18Decimals(1000));
       await expect(timelock.connect(bob)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS)).to.be.revertedWith(
         'TimeLock: no amount locked'
       );
@@ -304,16 +304,16 @@ describe("TimeLock", function () {
       await timelock.connect(funds).lockAmount(bob, expandTo18Decimals(1000));
 
       const beforeAlice = await timelock.connect(alice)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS);
-      expect(beforeAlice[0]).equal(expandTo18Decimals(1000));
+      expect(beforeAlice).equal(expandTo18Decimals(1000));
       const beforeBob = await timelock.connect(bob)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS);
-      expect(beforeBob[0]).equal(expandTo18Decimals(1000));
+      expect(beforeBob).equal(expandTo18Decimals(1000));
       
       await timelock.connect(alice).transfer(bob);
       await expect(timelock.connect(alice)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS)).to.be.revertedWith(
         'TimeLock: no amount locked'
       );
       const afterBob = await timelock.connect(bob)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS);
-      expect(afterBob[0]).equal(expandTo18Decimals(2000));
+      expect(afterBob).equal(expandTo18Decimals(2000));
     });
 
 
@@ -324,7 +324,7 @@ describe("TimeLock", function () {
       const { apra, owner, funds, fees, timelock, alice, bob } = await loadFixture(deployAndLockAlice1000);
       const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
       const beforeAlice = await timelock.connect(alice)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS);
-      expect(beforeAlice[0]).equal(expandTo18Decimals(1000));
+      expect(beforeAlice).equal(expandTo18Decimals(1000));
       
       await time.increaseTo(VESTING_IN_SECS + unlockTime);
       await expect(timelock.connect(alice).withdraw()).to.be.revertedWith(
@@ -339,7 +339,7 @@ describe("TimeLock", function () {
       const { apra, owner, funds, fees, timelock, alice, bob } = await loadFixture(deployAndLockAlice1000);
       const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
       const beforeAlice = await timelock.connect(alice)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS);
-      expect(beforeAlice[0]).equal(expandTo18Decimals(1000));
+      expect(beforeAlice).equal(expandTo18Decimals(1000));
       
       await time.increaseTo(VESTING_IN_SECS + unlockTime);
       await expect(timelock.connect(alice).withdraw()).to.be.revertedWith(
@@ -351,7 +351,7 @@ describe("TimeLock", function () {
       const { apra, owner, funds, fees, timelock, alice, bob } = await loadFixture(deployAndLockAlice1000);
       const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
       const beforeAlice = await timelock.connect(alice)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS);
-      expect(beforeAlice[0]).equal(expandTo18Decimals(1000));
+      expect(beforeAlice).equal(expandTo18Decimals(1000));
       
       await time.increaseTo(VESTING_IN_SECS + unlockTime);
       await timelock.lockIcoTimestamp();
@@ -366,7 +366,7 @@ describe("TimeLock", function () {
       const { apra, owner, funds, fees, timelock, alice, bob } = await loadFixture(deployAndLockAlice1000);
       const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
       const beforeAlice = await timelock.connect(alice)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS);
-      expect(beforeAlice[0]).equal(expandTo18Decimals(1000));
+      expect(beforeAlice).equal(expandTo18Decimals(1000));
       
       await time.increaseTo(VESTING_IN_SECS + unlockTime);
       await timelock.lockIcoTimestamp();
