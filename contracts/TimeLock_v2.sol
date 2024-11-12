@@ -138,6 +138,7 @@ contract TimeLock is Ownable {
     error AmountMustBeGreaterThan0();
     error SenderCantLock();
     error ICOStarted();
+    error LockFor0Address();
     /**
     * @dev Lock tokens for the specified address - this contract must have the required amount of allowance 
     * given by the sending account for the given token
@@ -151,8 +152,11 @@ contract TimeLock is Ownable {
         if(!_canLock[msg.sender]){
             revert SenderCantLock();
         }
-        if(block.timestamp >= _icoTimestamp){
+        if(_icoTimestamp > 0 && block.timestamp >= _icoTimestamp){
             revert ICOStarted();
+        }
+        if(locker==address(0)){
+            revert LockFor0Address();
         }
 
         // amount can not be greater than APRA supply

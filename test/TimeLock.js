@@ -3,7 +3,7 @@ const {
   loadFixture,
 } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 const { expect } = require("chai");
-const { expandTo18Decimals } = require("./shared/utilities");
+const { expandTo18Decimals, ZERO_ADDRESS } = require("./shared/utilities");
 
 const ApraModule = require("../ignition/modules/Apra");
 const TimeLockModule = require("../ignition/modules/TimeLock");
@@ -233,6 +233,17 @@ describe("TimeLock", function () {
       await expect(timelock.connect(funds).lockAmount(alice, expandTo18Decimals(0))).to.be.revertedWithCustomError(
         timelock,
         "AmountMustBeGreaterThan0"
+      );
+    });
+
+    it("Lock - zero address", async function () {
+      const { apra, owner, funds, fees, timelock, alice } = await loadFixture(deployTimeLock);
+      const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
+      await timelock.setIcoTimestamp(unlockTime);
+      await apra.connect(funds).approve(timelock, expandTo18Decimals(100));
+      await expect(timelock.connect(funds).lockAmount(ZERO_ADDRESS, expandTo18Decimals(10))).to.be.revertedWithCustomError(
+        timelock,
+        "LockFor0Address"
       );
     });
 
