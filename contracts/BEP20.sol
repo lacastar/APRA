@@ -36,10 +36,10 @@ contract BEP20 is IBEP20, Ownable {
 
     uint256 private _totalSupply;
 
-    string private _name;
-    string private _symbol;
-    uint8 private _decimals;
-    uint8 private _tokenFee;
+    string private constant NAME = "Apraemio";
+    string private constant SYMBOL = "APRA";
+    uint8 private constant DECIMALS = 18;
+    uint8 private constant TOKENFEE = 1;
     address private _feeWallet;
     bool private _takeFee;
     mapping (address => bool) private _isExcludedFromFee;
@@ -55,14 +55,10 @@ contract BEP20 is IBEP20, Ownable {
      * {name}, {symbol}, {tokenFee} and {decimals} are immutable: they can only be set once during
      * construction.
      */
-    constructor (string memory name_, string memory symbol_, uint8 tokenFee_, address feeWallet_) {
+    constructor (address feeWallet_) {
         if(feeWallet_ == address(0)) {
             revert FeeWalletIsZeroAddress();
         }
-        _name = name_;
-        _symbol = symbol_;
-        _decimals = 18;
-        _tokenFee = tokenFee_;
         _takeFee = true;
         _feeWallet = feeWallet_;
     }
@@ -71,7 +67,7 @@ contract BEP20 is IBEP20, Ownable {
      * @dev Returns the name of the token.
      */
     function name() external override view returns (string memory) {
-        return _name;
+        return NAME;
     }
 
     function getOwner() external override view returns (address) {
@@ -83,11 +79,11 @@ contract BEP20 is IBEP20, Ownable {
      * name.
      */
     function symbol() external override view returns (string memory) {
-        return _symbol;
+        return SYMBOL;
     }
 
     function tokenFee() external view returns (uint8) {
-        return _tokenFee;
+        return TOKENFEE;
     }
 
     /**
@@ -104,7 +100,7 @@ contract BEP20 is IBEP20, Ownable {
      * {IBEP20-balanceOf} and {IBEP20-transfer}.
      */
     function decimals() external override view returns (uint8) {
-        return _decimals;
+        return DECIMALS;
     }
 
     /**
@@ -261,7 +257,7 @@ contract BEP20 is IBEP20, Ownable {
         uint256 fee;
 
         unchecked {
-            fee = takeFee ? amount * _tokenFee / 100 : 0;
+            fee = takeFee ? amount * TOKENFEE / 100 : 0;
             _balances[sender] -= amount;
             // Overflow not possible: the sum of all balances is capped by totalSupply, and the sum is preserved by
             // decrementing then incrementing.
@@ -292,8 +288,8 @@ contract BEP20 is IBEP20, Ownable {
 
         _totalSupply += amount;
         unchecked {
-            if(_tokenFee>0 ) {
-                if(_totalSupply*_tokenFee < _totalSupply){
+            if(TOKENFEE>0 ) {
+                if(_totalSupply*TOKENFEE < _totalSupply){
                     revert PossibleFeeCalculationOverflow();
                 }
             }
