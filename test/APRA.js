@@ -106,24 +106,27 @@ describe("APRA", function () {
     it("Insufficient amount to transfer", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(alice1000NoFees);
 
-      await expect(apra.connect(bob).transfer(alice, expandTo18Decimals(100))).to.be.revertedWith(
-        'BEP20: transfer amount exceeds balance'
+      await expect(apra.connect(bob).transfer(alice, expandTo18Decimals(100))).to.be.revertedWithCustomError(
+        apra,
+        'TransferAmountExceedsBalance'
       );
     });
 
     it("Insufficient amount to transfer", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(alice1000NoFees);
 
-      await expect(apra.connect(alice).transfer(ZERO_ADDRESS, expandTo18Decimals(100))).to.be.revertedWith(
-        "BEP20: transfer to the zero address"
+      await expect(apra.connect(alice).transfer(ZERO_ADDRESS, expandTo18Decimals(100))).to.be.revertedWithCustomError(
+        apra,
+        'TransferToTheZeroAddress'
       );
     });
 
     it("Allowance to 0x0 address", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(alice1000NoFees);
 
-      await expect(apra.connect(alice).approve(ZERO_ADDRESS, expandTo18Decimals(100))).to.be.revertedWith(
-        "BEP20: approve to the zero address"
+      await expect(apra.connect(alice).approve(ZERO_ADDRESS, expandTo18Decimals(100))).to.be.revertedWithCustomError(
+        apra,
+        'ApproveToTheZeroAddress'
       );
     });
 
@@ -145,8 +148,9 @@ describe("APRA", function () {
       await apra.connect(funds).approve(bob, expandTo18Decimals(100));
       expect(await apra.allowance(funds, bob)).to.equal(expandTo18Decimals(100));
 
-      await expect(apra.connect(bob).transferFrom(funds, alice, expandTo18Decimals(110))).to.be.revertedWith(
-        'BEP20: transfer amount exceeds allowance'
+      await expect(apra.connect(bob).transferFrom(funds, alice, expandTo18Decimals(110))).to.be.revertedWithCustomError(
+        apra,
+        'TransferAmountExceedsAllowance'
       );
     });
 
@@ -173,9 +177,10 @@ describe("APRA", function () {
       await apra.connect(funds).decreaseAllowance(bob, expandTo18Decimals(50));
       expect(await apra.allowance(funds, bob)).to.equal(expandTo18Decimals(50));
 
-      await expect(apra.connect(funds).decreaseAllowance(bob, expandTo18Decimals(100))).to.be.revertedWith(
-        "BEP20: Decreased allowance below zero"
-      )
+      await expect(apra.connect(funds).decreaseAllowance(bob, expandTo18Decimals(100))).to.be.revertedWithCustomError(
+        apra,
+        'DecreasedAllowanceBelowZero'
+      );
     });
 
   });
@@ -204,8 +209,9 @@ describe("APRA", function () {
 
     it("Burn more than balance", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(alice1000NoFees);
-      await expect(apra.connect(alice).burn(expandTo18Decimals(1100))).to.be.revertedWith(
-        'ERC20: burn amount exceeds balance'
+      await expect(apra.connect(alice).burn(expandTo18Decimals(1100))).to.be.revertedWithCustomError(
+        apra,
+        'BurnAmountExceedsBalance'
       );
     });
 
@@ -214,8 +220,9 @@ describe("APRA", function () {
       await apra.connect(funds).approve(bob, expandTo18Decimals(100));
       expect(await apra.allowance(funds, bob)).to.equal(expandTo18Decimals(100));
 
-      await expect(apra.connect(bob).burnFrom(funds, expandTo18Decimals(1000))).to.be.revertedWith(
-        'BEP20: burn amount exceeds allowance'
+      await expect(apra.connect(bob).burnFrom(funds, expandTo18Decimals(1000))).to.be.revertedWithCustomError(
+        apra,
+        'BurnAmountExceedsAllowance'
       );
     });
 
@@ -284,15 +291,17 @@ describe("APRA", function () {
     
     it("Change fee wallet to 0x0", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(alice1000NoFees);
-      await expect(apra.changeFeeWallet(ZERO_ADDRESS)).to.be.revertedWith(
-        "BEP20: new fee wallet is the zero address"
+      await expect(apra.changeFeeWallet(ZERO_ADDRESS)).to.be.revertedWithCustomError(
+        apra,
+        'NewFeeWallerIsTheZeroAddress'
       );
     });
 
     it("Change take fee to current value", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(alice1000NoFees);
-      await expect(apra.setTakeFee(false)).to.be.revertedWith(
-        "BEP20: taking fee is already set"
+      await expect(apra.setTakeFee(false)).to.be.revertedWithCustomError(
+        apra,
+        'TakingFeeIsAlreadySet'
       );
     });
 
@@ -301,38 +310,44 @@ describe("APRA", function () {
   describe("Ownership", function () {
     it("Change fee wallet", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(deployApra);
-      await expect(apra.connect(bob).changeFeeWallet(funds)).to.be.revertedWith(
-        'Ownable: caller is not the owner'
+      await expect(apra.connect(bob).changeFeeWallet(funds)).to.be.revertedWithCustomError(
+        apra,
+        'CallerIsNotTheOwner'
       );
     })
     it("Set take fee", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(deployApra);
-      await expect(apra.connect(bob).setTakeFee(true)).to.be.revertedWith(
-        'Ownable: caller is not the owner'
+      await expect(apra.connect(bob).setTakeFee(true)).to.be.revertedWithCustomError(
+        apra,
+        'CallerIsNotTheOwner'
       );
     })
     it("Exclude from fee", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(deployApra);
-      await expect(apra.connect(bob).excludeFromFee(alice)).to.be.revertedWith(
-        'Ownable: caller is not the owner'
+      await expect(apra.connect(bob).excludeFromFee(alice)).to.be.revertedWithCustomError(
+        apra,
+        'CallerIsNotTheOwner'
       );
     })
     it("Include in fee", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(deployApra);
-      await expect(apra.connect(bob).includeInFee(alice)).to.be.revertedWith(
-        'Ownable: caller is not the owner'
+      await expect(apra.connect(bob).includeInFee(alice)).to.be.revertedWithCustomError(
+        apra,
+        'CallerIsNotTheOwner'
       );
     })
     it("Change owner", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(deployApra);
-      await expect(apra.connect(bob).transferOwnership(funds)).to.be.revertedWith(
-        'Ownable: caller is not the owner'
+      await expect(apra.connect(bob).transferOwnership(funds)).to.be.revertedWithCustomError(
+        apra,
+        'CallerIsNotTheOwner'
       );
     })
     it("Renounce owner", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(deployApra);
-      await expect(apra.connect(bob).renounceOwnership()).to.be.revertedWith(
-        'Ownable: caller is not the owner'
+      await expect(apra.connect(bob).renounceOwnership()).to.be.revertedWithCustomError(
+        apra,
+        'CallerIsNotTheOwner'
       );
     })
     it("Transfer Ownership", async function () {
@@ -347,8 +362,9 @@ describe("APRA", function () {
     })
     it("Transfer Ownership to 0x0", async function () {
       const { apra, owner, funds, fees, alice, bob } = await loadFixture(deployApra);
-      await expect(apra.transferOwnership(ZERO_ADDRESS)).to.be.revertedWith(
-        "Ownable: new owner is the zero address"
+      await expect(apra.transferOwnership(ZERO_ADDRESS)).to.be.revertedWithCustomError(
+        apra,
+        'NewOwnerIsTheZeroAddress'
       );
     })
     

@@ -44,6 +44,9 @@ contract BEP20 is IBEP20, Ownable {
     bool private _takeFee;
     mapping (address => bool) private _isExcludedFromFee;
 
+    error InvalidTokenFee();
+    error FeeWalletIsZeroAddress();
+
     /**
      * @dev Sets the values for {name}, {symbol} and {tokenFee}, {} initializes {decimals} with
      * a default value of 18, {takeFee} to true and sets the {feeWallet}.
@@ -54,8 +57,12 @@ contract BEP20 is IBEP20, Ownable {
      * construction.
      */
     constructor (string memory name_, string memory symbol_, uint8 tokenFee_, address feeWallet_) {
-        require(tokenFee_<100, "BEP20: invalid token fee");
-        require(feeWallet_ != address(0), "BEP20: fee wallet is the zero address");
+        if (tokenFee_>=100) {
+            revert InvalidTokenFee();
+        } 
+        if(feeWallet_ == address(0)) {
+            revert FeeWalletIsZeroAddress();
+        }
         _name = name_;
         _symbol = symbol_;
         _decimals = 18;
@@ -150,6 +157,8 @@ contract BEP20 is IBEP20, Ownable {
         return true;
     }
 
+    error TransferAmountExceedsAllowance();
+
     /**
      * @dev See {IBEP20-transferFrom}.
      *
@@ -165,7 +174,9 @@ contract BEP20 is IBEP20, Ownable {
      */
     function transferFrom(address sender, address recipient, uint256 amount) external virtual override returns (bool) {
         _transfer(sender, recipient, amount);
-        require(_allowances[sender][_msgSender()] >= amount, "BEP20: transfer amount exceeds allowance");
+        if(_allowances[sender][_msgSender()] < amount) {
+            revert TransferAmountExceedsAllowance();
+        }
         unchecked {
             _approve(sender, _msgSender(), _allowances[sender][_msgSender()] - amount);
         }
@@ -189,6 +200,8 @@ contract BEP20 is IBEP20, Ownable {
         return true;
     }
 
+    error DecreasedAllowanceBelowZero();
+
     /**
      * @dev Atomically decreases the allowance granted to `spender` by the caller.
      *
@@ -204,13 +217,18 @@ contract BEP20 is IBEP20, Ownable {
      * `subtractedValue`.
      */
     function decreaseAllowance(address spender, uint256 subtractedValue) external virtual returns (bool) {
-        require(_allowances[_msgSender()][spender] >= subtractedValue, "BEP20: Decreased allowance below zero");
+        if(_allowances[_msgSender()][spender] < subtractedValue) {
+            revert DecreasedAllowanceBelowZero();
+        }
         unchecked {
             _approve(_msgSender(), spender, _allowances[_msgSender()][spender] - subtractedValue);
         }
         return true;
     }
 
+    error TransferFromTheZeroAddress();
+    error TransferToTheZeroAddress();
+    error TransferAmountExceedsBalance();
     /**
      * @dev Moves tokens `amount` from `sender` to `recipient`.
      *
@@ -226,9 +244,15 @@ contract BEP20 is IBEP20, Ownable {
      * - `sender` must have a balance of at least `amount`.
      */
     function _transfer(address sender, address recipient, uint256 amount) internal virtual {
-        require(sender != address(0), "BEP20: transfer from the zero address");
-        require(recipient != address(0), "BEP20: transfer to the zero address");
-        require(_balances[sender] >= amount, "BEP20: transfer amount exceeds balance");
+        if(sender == address(0)){
+            revert TransferFromTheZeroAddress();
+        }
+        if(recipient == address(0)){
+            revert TransferToTheZeroAddress();
+        }
+        if(_balances[sender] < amount){
+            revert TransferAmountExceedsBalance();
+        }
 
         _beforeTokenTransfer(sender, recipient, amount);
 
@@ -249,6 +273,7 @@ contract BEP20 is IBEP20, Ownable {
         if(takeFee) emit Transfer(sender, _feeWallet, fee);
     }
 
+    error MintToTheZeroAddress();
     /** @dev Creates `amount` tokens and assigns them to `account`, increasing
      * the total supply.
      *
@@ -259,8 +284,10 @@ contract BEP20 is IBEP20, Ownable {
      * - `to` cannot be the zero address.
      */
     function _mint(address account, uint256 amount) internal virtual {
-        require(account != address(0), "BEP20: mint to the zero address");
-
+        if(account == address(0)){
+            revert MintToTheZeroAddress();
+        }
+        
         _beforeTokenTransfer(address(0), account, amount);
 
         _totalSupply = _totalSupply + amount;
@@ -283,6 +310,7 @@ contract BEP20 is IBEP20, Ownable {
         _burn(_msgSender(), amount);
     }
 
+    error BurnAmountExceedsAllowance();
     /**
      * @dev Destroys `amount` tokens from `account`, deducting from the caller's
      * allowance.
@@ -295,13 +323,17 @@ contract BEP20 is IBEP20, Ownable {
      * `amount`.
      */
     function burnFrom(address account, uint256 amount) external virtual {
-        require(_allowances[account][_msgSender()] >= amount, "BEP20: burn amount exceeds allowance");
+        if(_allowances[account][_msgSender()] < amount){
+           revert BurnAmountExceedsAllowance();
+        }
         unchecked{
             _approve(account, _msgSender(), _allowances[account][_msgSender()] - amount);
         }
         _burn(account, amount);
     }
 
+    error BurnFromTheZeroAddress();
+    error BurnAmountExceedsBalance();
     /**
      * @dev Destroys `amount` tokens from `account`, reducing the
      * total supply.
@@ -314,12 +346,15 @@ contract BEP20 is IBEP20, Ownable {
      * - `account` must have at least `amount` tokens.
      */
     function _burn(address account, uint256 amount) internal virtual {
-        require(account != address(0), "ERC20: burn from the zero address");
-
+        if(account == address(0)){
+            revert BurnFromTheZeroAddress();
+        }
         _beforeTokenTransfer(account, address(0), amount);
 
         uint256 accountBalance = _balances[account];
-        require(accountBalance >= amount, "ERC20: burn amount exceeds balance");
+        if(accountBalance < amount){
+            revert BurnAmountExceedsBalance();
+        }
         unchecked {
             _balances[account] = accountBalance - amount;
             // Overflow not possible: amount <= accountBalance <= totalSupply.
@@ -329,6 +364,8 @@ contract BEP20 is IBEP20, Ownable {
         emit Transfer(account, address(0), amount);
     }
 
+    error ApproveFromTheZeroAddress();
+    error ApproveToTheZeroAddress();
     /**
      * @dev Sets `amount` as the allowance of `spender` over the `owner` s tokens.
      *
@@ -343,9 +380,12 @@ contract BEP20 is IBEP20, Ownable {
      * - `spender` cannot be the zero address.
      */
     function _approve(address owner_, address spender, uint256 amount) internal virtual {
-        require(owner_ != address(0), "BEP20: approve from the zero address");
-        require(spender != address(0), "BEP20: approve to the zero address");
-
+        if(owner_ == address(0)){
+            revert ApproveFromTheZeroAddress();
+        }
+        if(spender == address(0)){
+            revert ApproveToTheZeroAddress();
+        }
         _allowances[owner_][spender] = amount;
         emit Approval(owner_, spender, amount);
     }
@@ -366,12 +406,15 @@ contract BEP20 is IBEP20, Ownable {
      */
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual {}
 
+    error NewFeeWallerIsTheZeroAddress();
     /**
      * @dev Change the fee wallet to a new account (`newFeeWallet`).
      * Can only be called by the current owner.
      */
     function changeFeeWallet(address newFeeWallet) external virtual onlyOwner {
-        require(newFeeWallet != address(0), "BEP20: new fee wallet is the zero address");
+        if(newFeeWallet == address(0)){
+            revert NewFeeWallerIsTheZeroAddress();
+        }
         address oldFeeWallet = _feeWallet;
         _feeWallet = newFeeWallet;
         emit FeeWalletChanged(oldFeeWallet, newFeeWallet);
@@ -379,12 +422,15 @@ contract BEP20 is IBEP20, Ownable {
 
     event FeeWalletChanged(address indexed oldFeeWallet, address indexed newFeeWallet);
 
+    error TakingFeeIsAlreadySet();
     /**
      * @dev Enable or disable fee taking for transactions according to (`takeFee`).
      * Can only be called by the current owner.
      */
     function setTakeFee(bool takeFee) external virtual onlyOwner {
-        require(takeFee != _takeFee, "BEP20: taking fee is already set");
+        if(takeFee == _takeFee){
+            revert TakingFeeIsAlreadySet();
+        }
         _takeFee = takeFee;
         emit FeeTakingEnabled(takeFee, owner());
     }

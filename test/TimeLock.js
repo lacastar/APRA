@@ -83,16 +83,18 @@ describe("TimeLock", function () {
       expect(await timelock.getIcoTimestamp()).to.equal(unlockTime);
       await timelock.lockIcoTimestamp();
       expect(await timelock.isIcoLocked()).to.equal(true);
-      await expect(timelock.lockIcoTimestamp()).to.be.revertedWith(
-        "TimeLock: ICO timestamp already locked"
-      )
+      await expect(timelock.lockIcoTimestamp()).to.be.revertedWithCustomError(
+        timelock,
+        "ICOTimestampLocked"
+      );
     });
 
     it("Lock ico timestamp without set time", async function () {
       const { apra, owner, funds, fees, timelock, alice } = await loadFixture(deployTimeLock);
       expect(await timelock.isIcoLocked()).to.equal(false);
-      await expect(timelock.lockIcoTimestamp()).to.be.revertedWith(
-        "TimeLock: ICO timestamp not set"
+      await expect(timelock.lockIcoTimestamp()).to.be.revertedWithCustomError(
+        timelock,
+        "ICOTimestampNotSet"
       );
       expect(await timelock.isIcoLocked()).to.equal(false);
     });
@@ -103,9 +105,10 @@ describe("TimeLock", function () {
       await timelock.setIcoTimestamp(unlockTime);
       await timelock.lockIcoTimestamp();
       expect(await timelock.isIcoLocked()).to.equal(true);
-      await expect(timelock.setIcoTimestamp(unlockTime)).to.be.revertedWith(
-        "TimeLock: ICO timestamp locked"
-      )
+      await expect(timelock.setIcoTimestamp(unlockTime)).to.be.revertedWithCustomError(
+        timelock,
+        "ICOTimestampLocked"
+      );
     });
 
   });
@@ -114,32 +117,36 @@ describe("TimeLock", function () {
     it("Set timestamp", async function () {
       const { apra, owner, funds, fees, timelock, alice } = await loadFixture(deployTimeLock);
       const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
-      await expect(timelock.connect(alice).setIcoTimestamp(unlockTime)).to.be.revertedWith(
-        'Ownable: caller is not the owner'
-      )
+      await expect(timelock.connect(alice).setIcoTimestamp(unlockTime)).to.be.revertedWithCustomError(
+        timelock,
+        "CallerIsNotTheOwner"
+      );
     });
 
     it("Lock timestamp", async function () {
       const { apra, owner, funds, fees, timelock, alice } = await loadFixture(deployTimeLock);
       const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
       await timelock.setIcoTimestamp(unlockTime);
-      await expect(timelock.connect(alice).lockIcoTimestamp()).to.be.revertedWith(
-        'Ownable: caller is not the owner'
-      )
+      await expect(timelock.connect(alice).lockIcoTimestamp()).to.be.revertedWithCustomError(
+        timelock,
+        "CallerIsNotTheOwner"
+      );
     });
 
     it("Set locker", async function () {
       const { apra, owner, funds, fees, timelock, alice } = await loadFixture(deployTimeLock);
-      await expect(timelock.connect(alice).setAccountAsLocker(alice)).to.be.revertedWith(
-        'Ownable: caller is not the owner'
-      )
+      await expect(timelock.connect(alice).setAccountAsLocker(alice)).to.be.revertedWithCustomError(
+        timelock,
+        "CallerIsNotTheOwner"
+      );
     });
 
     it("Remove locker", async function () {
       const { apra, owner, funds, fees, timelock, alice } = await loadFixture(deployTimeLock);
-      await expect(timelock.connect(alice).removeAccountFromLockers(alice)).to.be.revertedWith(
-        'Ownable: caller is not the owner'
-      )
+      await expect(timelock.connect(alice).removeAccountFromLockers(alice)).to.be.revertedWithCustomError(
+        timelock,
+        "CallerIsNotTheOwner"
+      );
     });
     
   });
@@ -148,15 +155,17 @@ describe("TimeLock", function () {
 
     it("Available - ICO not set", async function () {
       const { apra, owner, funds, fees, timelock, alice } = await loadFixture(deployTimeLock);
-      await expect(timelock.available()).to.be.revertedWith(
-        "TimeLock: ICO timestamp not set"
+      await expect(timelock.available()).to.be.revertedWithCustomError(
+        timelock,
+        "ICOTimestampNotSet"
       );
     });
 
     it("Available - ICO not set - locker", async function () {
       const { apra, owner, funds, fees, timelock, alice } = await loadFixture(deployTimeLock);
-      await expect(timelock["available(address)"](alice.address)).to.be.revertedWith(
-        "TimeLock: ICO timestamp not set"
+      await expect(timelock["available(address)"](alice.address)).to.be.revertedWithCustomError(
+        timelock,
+        "ICOTimestampNotSet"
       );
     });
 
@@ -164,8 +173,9 @@ describe("TimeLock", function () {
       const { apra, owner, funds, fees, timelock, alice } = await loadFixture(deployTimeLock);
       const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
       await timelock.setIcoTimestamp(unlockTime);
-      await expect(timelock.available()).to.be.revertedWith(
-        "TimeLock: no withdrawal before ICO"
+      await expect(timelock.available()).to.be.revertedWithCustomError(
+        timelock,
+        "NoWithdrawalBeforeICO"
       );
     });
 
@@ -173,8 +183,9 @@ describe("TimeLock", function () {
       const { apra, owner, funds, fees, timelock, alice } = await loadFixture(deployTimeLock);
       const unlockTime = (await time.latest()) -2;
       await timelock.setIcoTimestamp(unlockTime);
-      await expect(timelock.availableAt(await time.latest()-1)).to.be.revertedWith(
-        "TimeLock: timestamp is in the past"
+      await expect(timelock.availableAt(await time.latest()-1)).to.be.revertedWithCustomError(
+        timelock,
+        "TimestampIsInThePast"
       );
     });
 
@@ -183,8 +194,9 @@ describe("TimeLock", function () {
       const { apra, owner, funds, fees, timelock, alice } = await loadFixture(deployTimeLock);
       const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
       await timelock.setIcoTimestamp(unlockTime);
-      await expect(timelock.availableAt(await time.latest() + ONE_YEAR_IN_SECS + 1)).to.be.revertedWith(
-        "TimeLock: no amount locked"
+      await expect(timelock.availableAt(await time.latest() + ONE_YEAR_IN_SECS + 1)).to.be.revertedWithCustomError(
+        timelock,
+        "NoAmountLocked"
       );
     });
 
@@ -218,9 +230,10 @@ describe("TimeLock", function () {
       const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
       //await timelock.setIcoTimestamp(unlockTime);
       await apra.connect(funds).approve(timelock, expandTo18Decimals(100));
-      await expect(timelock.connect(funds).lockAmount(alice, expandTo18Decimals(0))).to.be.revertedWith(
-        "TimeLock: amount must be greater than 0"
-      )
+      await expect(timelock.connect(funds).lockAmount(alice, expandTo18Decimals(0))).to.be.revertedWithCustomError(
+        timelock,
+        "AmountMustBeGreaterThan0"
+      );
     });
 
 
@@ -230,9 +243,10 @@ describe("TimeLock", function () {
       //await timelock.setIcoTimestamp(unlockTime);
       await apra.connect(funds).approve(timelock, expandTo18Decimals(100));
       await timelock.connect(owner).removeAccountFromLockers(funds);
-      await expect(timelock.connect(funds).lockAmount(alice, expandTo18Decimals(10))).to.be.revertedWith(
-        "TimeLock: sender can't lock"
-      )
+      await expect(timelock.connect(funds).lockAmount(alice, expandTo18Decimals(10))).to.be.revertedWithCustomError(
+        timelock,
+        "SenderCantLock"
+      );
     });
 
     it("Lock - ICO started", async function () {
@@ -241,9 +255,10 @@ describe("TimeLock", function () {
       await timelock.setIcoTimestamp(unlockTime);
       await apra.connect(funds).approve(timelock, expandTo18Decimals(100));
       await time.increaseTo(ONE_YEAR_IN_SECS + unlockTime);
-      await expect(timelock.connect(funds).lockAmount(alice, expandTo18Decimals(10))).to.be.revertedWith(
-        "TimeLock: ICO started"
-      )
+      await expect(timelock.connect(funds).lockAmount(alice, expandTo18Decimals(10))).to.be.revertedWithCustomError(
+        timelock,
+        "ICOStarted"
+      );
     });
   });
 
@@ -267,12 +282,14 @@ describe("TimeLock", function () {
       const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
       const beforeAlice = await timelock.connect(alice)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS);
       expect(beforeAlice).equal(expandTo18Decimals(1000));
-      await expect(timelock.connect(bob)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS)).to.be.revertedWith(
-        'TimeLock: no amount locked'
+      await expect(timelock.connect(bob)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS)).to.be.revertedWithCustomError(
+        timelock,
+        "NoAmountLocked"
       );
       await timelock.connect(alice).transfer(bob);
-      await expect(timelock.connect(alice)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS)).to.be.revertedWith(
-        'TimeLock: no amount locked'
+      await expect(timelock.connect(alice)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS)).to.be.revertedWithCustomError(
+        timelock,
+        "NoAmountLocked"
       );
       const afterBob = await timelock.connect(bob)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS);
       expect(afterBob).equal(expandTo18Decimals(1000));
@@ -284,15 +301,17 @@ describe("TimeLock", function () {
       const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
       const beforeAlice = await timelock.connect(alice)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS);
       expect(beforeAlice).equal(expandTo18Decimals(1000));
-      await expect(timelock.connect(bob)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS)).to.be.revertedWith(
-        'TimeLock: no amount locked'
+      await expect(timelock.connect(bob)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS)).to.be.revertedWithCustomError(
+        timelock,
+        "NoAmountLocked"
       );
       await timelock.lockIcoTimestamp();
       await time.increaseTo(VESTING_IN_SECS + unlockTime);
       await timelock.connect(alice).withdraw();
 
-      await expect(timelock.connect(alice).transfer(bob)).to.be.revertedWith(
-        "TimeLock: nothing to transfer"
+      await expect(timelock.connect(alice).transfer(bob)).to.be.revertedWithCustomError(
+        timelock,
+        "NothingToTransfer"
       );
     });
 
@@ -309,8 +328,9 @@ describe("TimeLock", function () {
       expect(beforeBob).equal(expandTo18Decimals(1000));
       
       await timelock.connect(alice).transfer(bob);
-      await expect(timelock.connect(alice)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS)).to.be.revertedWith(
-        'TimeLock: no amount locked'
+      await expect(timelock.connect(alice)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS)).to.be.revertedWithCustomError(
+        timelock,
+        "NoAmountLocked"
       );
       const afterBob = await timelock.connect(bob)["availableAt(uint256)"](unlockTime + VESTING_IN_SECS);
       expect(afterBob).equal(expandTo18Decimals(2000));
@@ -327,8 +347,9 @@ describe("TimeLock", function () {
       expect(beforeAlice).equal(expandTo18Decimals(1000));
       
       await time.increaseTo(VESTING_IN_SECS + unlockTime);
-      await expect(timelock.connect(alice).withdraw()).to.be.revertedWith(
-        "TimeLock: ICO timestamp not locked"
+      await expect(timelock.connect(alice).withdraw()).to.be.revertedWithCustomError(
+        timelock,
+        "ICOTimestampNotLocked"
       );
     });
 
@@ -342,8 +363,9 @@ describe("TimeLock", function () {
       expect(beforeAlice).equal(expandTo18Decimals(1000));
       
       await time.increaseTo(VESTING_IN_SECS + unlockTime);
-      await expect(timelock.connect(alice).withdraw()).to.be.revertedWith(
-        "TimeLock: ICO timestamp not locked"
+      await expect(timelock.connect(alice).withdraw()).to.be.revertedWithCustomError(
+        timelock,
+        "ICOTimestampNotLocked"
       );
     });
 
@@ -375,8 +397,9 @@ describe("TimeLock", function () {
         [fees, timelock, alice],
         [expandTo18Decimals(0), expandTo18Decimals(-1000), expandTo18Decimals(1000)]
       );
-      await expect(timelock.connect(alice).withdraw()).to.be.revertedWith(
-        "TimeLock: nothing to withdraw"
+      await expect(timelock.connect(alice).withdraw()).to.be.revertedWithCustomError(
+        timelock,
+        "NothingToWithdraw"
       );
     });
 

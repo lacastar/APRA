@@ -49,23 +49,31 @@ contract TimeLock is Ownable {
     event TokensWithdrawn(address indexed locker, uint256 indexed timestamp, uint256 amount);
     event TokensTransferred(address indexed from, address indexed to);
 
+    error ICOTimestampLocked();
     /**
     * @dev Sets the ICO timestamp to the given time
     * @param icoTimestamp ICO timestamp (in seconds after UNIX epoch)
     */
     function setIcoTimestamp(uint256 icoTimestamp) external onlyOwner {
-        require(!_icoLocked, "TimeLock: ICO timestamp locked");
+        if(_icoLocked){
+            revert ICOTimestampLocked();
+        }
         _icoTimestamp = icoTimestamp;
 
         emit IcoTimestampSet(icoTimestamp);
     }
 
+    error ICOTimestampNotSet();
     /**
     * @dev Locks the ICO timestamp to the already set value, no further modification is possible
     */
     function lockIcoTimestamp() external onlyOwner {
-        require(!_icoLocked, "TimeLock: ICO timestamp already locked");
-        require(_icoTimestamp > 0, "TimeLock: ICO timestamp not set");
+        if(_icoLocked){
+            revert ICOTimestampLocked();
+        }
+        if(_icoTimestamp == 0){
+            revert ICOTimestampNotSet();
+        }
         _icoLocked = true;
 
         emit IcoTimestampLocked(block.timestamp, _icoTimestamp);
@@ -94,17 +102,30 @@ contract TimeLock is Ownable {
         return availableAt(msg.sender, timestamp);
     }
 
+    error NoWithdrawalBeforeICO();
+    error TimestampIsInThePast();
+    error NoAmountLocked();
+    
     /**
     * @dev Calculates the token amount that can be withdrawn by the given address at the specified time
     * @param locker Withdrawing address
     * @param timestamp Timestamp (in seconds after UNIC epoch) of withdrawal
     */
     function availableAt(address locker, uint256 timestamp) public view returns (uint256) {
-        require(_icoTimestamp > 0, "TimeLock: ICO timestamp not set");
-        require(timestamp > _icoTimestamp, "TimeLock: no withdrawal before ICO");
-        require(timestamp >= block.timestamp, "TimeLock: timestamp is in the past");
+        if(_icoTimestamp == 0){
+            revert ICOTimestampNotSet();
+        }
+        if(timestamp <= _icoTimestamp){
+            revert NoWithdrawalBeforeICO();
+        }
+        if(timestamp < block.timestamp){
+            revert TimestampIsInThePast();
+        }
         Locker memory lock = _lockers[locker];
-        require(lock.fullAmount >0, "TimeLock: no amount locked");
+        if(lock.fullAmount ==0){
+            revert NoAmountLocked();
+        }
+        
         unchecked {
             // only future dates are allowed
             uint256 months = (timestamp - _icoTimestamp) / 30 days;
@@ -114,6 +135,9 @@ contract TimeLock is Ownable {
         }
     }
 
+    error AmountMustBeGreaterThan0();
+    error SenderCantLock();
+    error ICOStarted();
     /**
     * @dev Lock tokens for the specified address - this contract must have the required amount of allowance 
     * given by the sending account for the given token
@@ -121,10 +145,16 @@ contract TimeLock is Ownable {
     * @param amount How many tokens to lock
     */
     function lockAmount(address locker, uint256 amount) external {
-        require(amount > 0, "TimeLock: amount must be greater than 0");
-        require(_canLock[msg.sender], "TimeLock: sender can't lock");
-        require(block.timestamp < _icoTimestamp, "TimeLock: ICO started");
-        
+        if(amount==0){
+            revert AmountMustBeGreaterThan0();
+        }
+        if(!_canLock[msg.sender]){
+            revert SenderCantLock();
+        }
+        if(block.timestamp >= _icoTimestamp){
+            revert ICOStarted();
+        }
+
         // amount can not be greater than APRA supply
         unchecked{
             _lockers[locker].fullAmount += amount;
@@ -134,13 +164,20 @@ contract TimeLock is Ownable {
         emit TokensLocked(locker, amount);
     }
 
+    error ICOTimestampNotLocked();
+    error NothingToWithdraw();
+
     /**
     * @dev Withdraw available tokens
     */
     function withdraw() external {
-        require(_icoLocked, "TimeLock: ICO timestamp not locked");
+        if(!_icoLocked){
+            revert ICOTimestampNotLocked();
+        }
         uint256 sum = available();
-        require(sum > 0, "TimeLock: nothing to withdraw");
+        if(sum == 0){
+            revert NothingToWithdraw();
+        }
         // amount can not be greater than APRA supply
         unchecked{
             _lockers[msg.sender].withdrawn += sum;
@@ -150,12 +187,15 @@ contract TimeLock is Ownable {
         emit TokensWithdrawn(msg.sender, block.timestamp, sum);
     }
 
+    error NothingToTransfer();
     /**
     * @dev Transfer lock
     */
     function transfer(address recipient) external {
         Locker memory lock = _lockers[msg.sender];
-        require(lock.fullAmount > lock.withdrawn, "TimeLock: nothing to transfer");
+        if(lock.fullAmount <= lock.withdrawn){
+            revert NothingToTransfer();
+        }
         // amount can not be greater than APRA supply
         unchecked{
             _lockers[recipient].fullAmount += lock.fullAmount;

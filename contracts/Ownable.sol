@@ -36,11 +36,15 @@ abstract contract Ownable is Context {
         return _owner;
     }
 
+    error CallerIsNotTheOwner();
+
     /**
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(owner() == _msgSender(), "Ownable: caller is not the owner");
+        if(owner() != _msgSender()){
+            revert CallerIsNotTheOwner();
+        }
         _;
     }
 
@@ -55,12 +59,15 @@ abstract contract Ownable is Context {
         _transferOwnership(address(0));
     }
 
+    error NewOwnerIsTheZeroAddress();
     /**
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
      * Can only be called by the current owner.
      */
     function transferOwnership(address newOwner) external virtual onlyOwner {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        if(newOwner == address(0)){
+            revert NewOwnerIsTheZeroAddress();
+        }
         _transferOwnership(newOwner);
     }
 
