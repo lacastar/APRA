@@ -139,6 +139,7 @@ contract TimeLock is Ownable {
     error SenderCantLock();
     error ICOStarted();
     error LockFor0Address();
+    error TimeLockNotExcludedFromFee();
     /**
     * @dev Lock tokens for the specified address - this contract must have the required amount of allowance 
     * given by the sending account for the given token
@@ -159,13 +160,19 @@ contract TimeLock is Ownable {
             revert LockFor0Address();
         }
 
-        // amount can not be greater than APRA supply
-        unchecked{
-            _lockers[locker].fullAmount += amount;
-        }
+
+        uint256 balanceBefore = _apra.balanceOf(address(this));
         _apra.transferFrom(msg.sender, address(this), amount);
 
+        // amount can not be greater than APRA supply and can not underflow
+        unchecked{
+            uint256 amountReceived = _apra.balanceOf(address(this)) - balanceBefore;
+            if(amountReceived != amount) revert TimeLockNotExcludedFromFee();
+            _lockers[locker].fullAmount += amount;
+
+        }
         emit TokensLocked(locker, amount);
+        
     }
 
     error ICOTimestampNotLocked();

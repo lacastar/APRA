@@ -111,6 +111,17 @@ describe("TimeLock", function () {
       );
     });
 
+    it("Timelock not excluded from fee", async function () {
+      const { apra, owner, funds, fees, timelock, alice } = await loadFixture(deployTimeLock);
+      const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
+      await timelock.setIcoTimestamp(unlockTime);
+      await apra.connect(funds).approve(timelock, expandTo18Decimals(100));
+      await apra.includeInFee(timelock);
+      await expect(timelock.connect(funds).lockAmount(alice, expandTo18Decimals(100))).to.be.revertedWithCustomError(
+        timelock,
+        "TimeLockNotExcludedFromFee"
+      );
+    });
   });
 
   describe("Ownership", function () {
