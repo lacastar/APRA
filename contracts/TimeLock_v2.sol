@@ -47,7 +47,7 @@ contract TimeLock is Ownable {
     event IcoTimestampLocked(uint256 when, uint256 icoTimestamp);
     event TokensLocked(address indexed locker, uint256 amount);
     event TokensWithdrawn(address indexed locker, uint256 indexed timestamp, uint256 amount);
-    event TokensTransferred(address indexed from, address indexed to);
+    event TokensTransferred(address indexed from, address indexed to, uint256 amount);
 
     error ICOTimestampLocked();
     /**
@@ -206,9 +206,9 @@ contract TimeLock is Ownable {
             _lockers[recipient].withdrawn += lock.withdrawn;
             _lockers[msg.sender].fullAmount = 0;
             _lockers[msg.sender].withdrawn = 0;
+
+            emit TokensTransferred(msg.sender, recipient, lock.fullAmount - lock.withdrawn);
         }
-        
-        emit TokensTransferred(msg.sender, recipient);
     }
 
 
