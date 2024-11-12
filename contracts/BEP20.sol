@@ -170,11 +170,12 @@ contract BEP20 is IBEP20, Ownable {
      */
     function transferFrom(address sender, address recipient, uint256 amount) external virtual override returns (bool) {
         _transfer(sender, recipient, amount);
-        if(_allowances[sender][_msgSender()] < amount) {
+        address senderTemp = _msgSender();
+        if(_allowances[sender][senderTemp] < amount) {
             revert TransferAmountExceedsAllowance();
         }
         unchecked {
-            _approve(sender, _msgSender(), _allowances[sender][_msgSender()] - amount);
+            _approve(sender, senderTemp, _allowances[sender][senderTemp] - amount);
         }
         return true;
     }
@@ -192,7 +193,8 @@ contract BEP20 is IBEP20, Ownable {
      * - `spender` cannot be the zero address.
      */
     function increaseAllowance(address spender, uint256 addedValue) external virtual returns (bool) {
-        _approve(_msgSender(), spender, _allowances[_msgSender()][spender] + addedValue);
+        address senderTemp = _msgSender();
+        _approve(senderTemp, spender, _allowances[senderTemp][spender] + addedValue);
         return true;
     }
 
@@ -213,11 +215,12 @@ contract BEP20 is IBEP20, Ownable {
      * `subtractedValue`.
      */
     function decreaseAllowance(address spender, uint256 subtractedValue) external virtual returns (bool) {
-        if(_allowances[_msgSender()][spender] < subtractedValue) {
+        address senderTemp = _msgSender();
+        if(_allowances[senderTemp][spender] < subtractedValue) {
             revert DecreasedAllowanceBelowZero();
         }
         unchecked {
-            _approve(_msgSender(), spender, _allowances[_msgSender()][spender] - subtractedValue);
+            _approve(senderTemp, spender, _allowances[senderTemp][spender] - subtractedValue);
         }
         return true;
     }
@@ -262,14 +265,15 @@ contract BEP20 is IBEP20, Ownable {
             _balances[sender] -= amount;
             // Overflow not possible: the sum of all balances is capped by totalSupply, and the sum is preserved by
             // decrementing then incrementing.
-            _balances[recipient] = _balances[recipient] + (amount - fee);
-            _balances[_feeWallet] = _balances[_feeWallet] + fee;
+            _balances[recipient] += (amount - fee);
+            _balances[_feeWallet] += _balances[_feeWallet];
         }
         emit Transfer(sender, recipient, amount);
         if(takeFee) emit Transfer(sender, _feeWallet, fee);
     }
 
     error MintToTheZeroAddress();
+    error PossibleFeeCalculationOverflow();
     /** @dev Creates `amount` tokens and assigns them to `account`, increasing
      * the total supply.
      *
@@ -286,13 +290,15 @@ contract BEP20 is IBEP20, Ownable {
         
         _beforeTokenTransfer(address(0), account, amount);
 
-        _totalSupply = _totalSupply + amount;
+        _totalSupply += amount;
         unchecked {
             if(_tokenFee>0 ) {
-                require(_totalSupply*_tokenFee >= _totalSupply, "BEP20: possible fee calculation overflow");
+                if(_totalSupply*_tokenFee < _totalSupply){
+                    revert PossibleFeeCalculationOverflow();
+                }
             }
         }
-        _balances[account] = _balances[account] + amount;
+        _balances[account] += amount;
 
         emit Transfer(address(0), account, amount);
     }
@@ -319,11 +325,12 @@ contract BEP20 is IBEP20, Ownable {
      * `amount`.
      */
     function burnFrom(address account, uint256 amount) external virtual {
-        if(_allowances[account][_msgSender()] < amount){
+        address senderTemp = _msgSender();
+        if(_allowances[account][senderTemp] < amount){
            revert BurnAmountExceedsAllowance();
         }
         unchecked{
-            _approve(account, _msgSender(), _allowances[account][_msgSender()] - amount);
+            _approve(account, senderTemp, _allowances[account][senderTemp] - amount);
         }
         _burn(account, amount);
     }
