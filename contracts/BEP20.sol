@@ -167,11 +167,12 @@ contract BEP20 is IBEP20, Ownable2Step {
     function transferFrom(address sender, address recipient, uint256 amount) external virtual override returns (bool) {
         _transfer(sender, recipient, amount);
         address senderTemp = _msgSender();
-        if(_allowances[sender][senderTemp] < amount) {
+        uint256 currentAllowanceTemp = _allowances[sender][senderTemp ];
+        if(currentAllowanceTemp < amount) {
             revert TransferAmountExceedsAllowance();
         }
         unchecked {
-            _approve(sender, senderTemp, _allowances[sender][senderTemp] - amount);
+            _approve(sender, senderTemp,currentAllowanceTemp - amount);
         }
         return true;
     }
@@ -212,11 +213,12 @@ contract BEP20 is IBEP20, Ownable2Step {
      */
     function decreaseAllowance(address spender, uint256 subtractedValue) external virtual returns (bool) {
         address senderTemp = _msgSender();
-        if(_allowances[senderTemp][spender] < subtractedValue) {
+        uint256 currentAllowanceTemp =  _allowances[senderTemp][spender];
+        if(currentAllowanceTemp < subtractedValue) {
             revert DecreasedAllowanceBelowZero();
         }
         unchecked {
-            _approve(senderTemp, spender, _allowances[senderTemp][spender] - subtractedValue);
+            _approve(senderTemp, spender, currentAllowanceTemp - subtractedValue);
         }
         return true;
     }
@@ -322,11 +324,12 @@ contract BEP20 is IBEP20, Ownable2Step {
      */
     function burnFrom(address account, uint256 amount) external virtual {
         address senderTemp = _msgSender();
-        if(_allowances[account][senderTemp] < amount){
+        uint256 currentAllowanceTemp =  _allowances[account][senderTemp ];
+        if(currentAllowanceTemp < amount){
            revert BurnAmountExceedsAllowance();
         }
         unchecked{
-            _approve(account, senderTemp, _allowances[account][senderTemp] - amount);
+            _approve(account, senderTemp, currentAllowanceTemp - amount);
         }
         _burn(account, amount);
     }
