@@ -264,7 +264,7 @@ contract BEP20 is IBEP20, Ownable2Step {
             // Overflow not possible: the sum of all balances is capped by totalSupply, and the sum is preserved by
             // decrementing then incrementing.
             _balances[recipient] += (amount - fee);
-            _balances[_feeWallet] += _balances[_feeWallet];
+            _balances[_feeWallet] += fee;
         }
         emit Transfer(sender, recipient, amount);
         if(takeFee) emit Transfer(sender, _feeWallet, fee);
